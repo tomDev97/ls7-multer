@@ -1,15 +1,17 @@
 const express = require('express');
-const fs = require('fs');
+// const fs = require('fs');
 const path = require('path');
 const MULTER_CONFIG = require('../ultis/multer-config');
 const  {PROMISE_REMOVE} = require('../config/remove-promise');
 const router = express.Router();
+const bcrypt = require('bcrypt');
 
 
 var users = [
     {
         id : 1,
-        name : 'Tom',
+        name : 'tom',
+        password : '$2b$10$.j0pAuEcmYIC5kQHp1eT1uAogNEsICI7xA52iDx/NLa8vU8cwMkvS',
         img: {
             mainImg : ['main1.jpg'],
             ortherImg : [ 'user1.jpg', 'user11.jpg' ]
@@ -18,6 +20,7 @@ var users = [
     {
         id : 2,
         name : 'kuro',
+        password : '$2b$10$.j0pAuEcmYIC5kQHp1eT1uAogNEsICI7xA52iDx/NLa8vU8cwMkvS',
         img: {
             mainImg : ['main2.jpg'],
             ortherImg : [ 'user1.jpg', 'user11.jpg' ]
@@ -60,8 +63,8 @@ const multer_config_fields = [
     { name : 'ortherImg', maxCount : 2}
 ]
 //using fields
-router.post('/create', MULTER_CONFIG.fields(multer_config_fields), (req, res) => {
-    const  { id, name } = req.body;  
+router.post('/create', MULTER_CONFIG.fields(multer_config_fields), async (req, res) => {
+    const  { id, name, password } = req.body;  
 
     let mainImg = req.files.mainImg.map(img => img.originalname); //array
     let ortherImg = req.files.ortherImg.map(img => img.originalname); //array
@@ -69,8 +72,12 @@ router.post('/create', MULTER_CONFIG.fields(multer_config_fields), (req, res) =>
     let isExits = users.findIndex( user => Object.is(id.toString(), user.id.toString()));
     if(isExits !== -1)
         return res.render('users', {error:true, message:'id_exits', users});
-    users.push({id, name, img : {mainImg, ortherImg}});
+    
+    let pashHash = await bcrypt.hash(password, 10);
+
+    users.push({id, name, password : pashHash , img : {mainImg, ortherImg}});
     res.render('users', {error : false, users});
+    // res.json({pashHash , users});
 })
 
 
